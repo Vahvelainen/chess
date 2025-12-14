@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChessGame } from "../engine/ChessGame";
 import { BoardState } from "../engine/board/BoardState";
 import { createSquare, Square } from "../engine/board/Square";
-import { Color, Piece } from "../engine/Piece";
+import { Color, Piece, PieceType } from "../engine/Piece";
 import { MoveRecord } from "../engine/Move";
 import { BaseBot } from "../bots/BaseBot";
 import { Bot } from "../bots/Bot";
@@ -35,6 +35,9 @@ export function ChessBoardView(): React.JSX.Element {
   const [error, setError] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<"pvp" | "bot">("pvp");
   const [humanColor, setHumanColor] = useState<Color>("white");
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: Square; to: Square; color: Color } | undefined>(
+    undefined
+  );
 
   const squares = useMemo(() => {
     const snapshot = board.snapshot();
@@ -109,6 +112,12 @@ export function ChessBoardView(): React.JSX.Element {
     if (from.file === to.file && from.rank === to.rank) {
       return;
     }
+    const movingPiece = gameRef.current.getBoard().getPiece(from);
+    if (movingPiece?.type === "pawn" && (to.rank === 7 || to.rank === 0)) {
+      setPendingPromotion({ from, to, color: movingPiece.color });
+      setError(undefined);
+      return;
+    }
     const result = gameRef.current.playMove({ from, to });
     if (result.success) {
       refreshState();
@@ -147,6 +156,9 @@ export function ChessBoardView(): React.JSX.Element {
     if (mode !== "bot") {
       return;
     }
+    if (pendingPromotion) {
+      return;
+    }
     if (activeColor !== botColor) {
       return;
     }
@@ -172,6 +184,27 @@ export function ChessBoardView(): React.JSX.Element {
       setError(result.error);
     }
   }, [mode, activeColor, botColor]);
+
+  function handlePromotionChoice(choice: PieceType): void {
+    if (!pendingPromotion) {
+      return;
+    }
+    const result = gameRef.current.playMove({ from: pendingPromotion.from, to: pendingPromotion.to, promotion: choice });
+    if (result.success) {
+      setPendingPromotion(undefined);
+      refreshState();
+      setError(undefined);
+      return;
+    }
+    if (result.error) {
+      setError(result.error);
+    }
+    setPendingPromotion(undefined);
+  }
+
+  function handlePromotionCancel(): void {
+    setPendingPromotion(undefined);
+  }
 
   return (
     <main className="app-shell">
@@ -299,6 +332,26 @@ export function ChessBoardView(): React.JSX.Element {
           ))}
         </ol>
       </aside>
+
+      {pendingPromotion ? (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-title">Choose promotion</div>
+            <div className="option-group">
+              {(["queen", "rook", "bishop", "knight"] as PieceType[]).map((type) => (
+                <button key={type} type="button" className="option-button" onClick={() => handlePromotionChoice(type)}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="controls-row">
+              <button type="button" className="control-button" onClick={handlePromotionCancel}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
