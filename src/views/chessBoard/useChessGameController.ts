@@ -50,13 +50,28 @@ export function useChessGameController(bot: Bot) {
   }
 
   function handleUndo(): void {
-    const result = gameRef.current.undo();
-    if (!result.success && result.error) {
-      setError(result.error);
+    const targetUndos = mode === "bot" ? Math.min(2, history.length) : 1;
+    if (targetUndos === 0) {
+      setError("No moves to undo");
       return;
     }
-    refreshState();
-    setError(undefined);
+
+    let completedUndos = 0;
+    while (completedUndos < targetUndos) {
+      const result = gameRef.current.undo();
+      if (!result.success) {
+        if (result.error) {
+          setError(result.error);
+        }
+        break;
+      }
+      completedUndos += 1;
+    }
+
+    if (completedUndos > 0) {
+      refreshState();
+      setError(undefined);
+    }
   }
 
   useEffect(() => {
