@@ -7,7 +7,7 @@ const PIECE_VALUES: Record<PieceType, number> = {
   bishop: 3,
   rook: 5,
   queen: 9,
-  king: 1000000
+  king: 0 // Handled via checkmate detection
 };
 
 export function pieceValue(piece: Piece): number {
