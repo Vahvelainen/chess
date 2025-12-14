@@ -166,24 +166,35 @@ export function ChessBoardView(): React.JSX.Element {
       return;
     }
     botRunning.current = true;
-    const move = botRef.current.selectMove(gameRef.current);
-    if (!move) {
-      setError("Bot has no moves");
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      const move = botRef.current.selectMove(gameRef.current);
+      if (!move) {
+        setError("Bot has no moves");
+        botRunning.current = false;
+        return;
+      }
+      const result = gameRef.current.playMove(move);
       botRunning.current = false;
-      return;
-    }
-    const result = gameRef.current.playMove(move);
-    botRunning.current = false;
-    if (result.success) {
-      setBoard(gameRef.current.getBoard());
-      setHistory(gameRef.current.getHistory());
-      setError(undefined);
-      return;
-    }
-    if (result.error) {
-      setError(result.error);
-    }
-  }, [mode, activeColor, botColor]);
+      if (result.success) {
+        setBoard(gameRef.current.getBoard());
+        setHistory(gameRef.current.getHistory());
+        setError(undefined);
+        return;
+      }
+      if (result.error) {
+        setError(result.error);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      botRunning.current = false;
+    };
+  }, [mode, activeColor, botColor, pendingPromotion]);
 
   function handlePromotionChoice(choice: PieceType): void {
     if (!pendingPromotion) {
