@@ -1,0 +1,34 @@
+---
+alwaysApply: true
+---
+
+---
+alwaysApply: false
+---
+
+## Project Rules
+
+**Project**
+- Minimal React/TypeScript chess app with engine, UI, and pluggable bots.
+
+**Engine / Game Flow**
+- Use `ChessGame` API only: `getBoard()`, `getLegalMoves()`, `playMove()`, `undo()`, `reset()`, `getActiveColor()`, `getHistory()`.
+- Moves are typed (`Move`), history via `MoveRecord` with notation. Promotion is part of `Move` via `promotion: PieceType`.
+- Do not alter engine rules to mask UI issues; surface errors instead.
+
+**Bots**
+- Every bot implements `Bot` (name + `selectMove(game: ChessGame): Move | undefined`). Base bot picks the first legal move. Bots read via `getLegalMoves()` and return a move; they never mutate game state directly.
+
+**UI Behavior**
+- Drag-and-drop only on the active human turn; bot turns block drag. Illegal moves show inline error.
+- Modes: PvP or Bot. In Bot mode the user picks human color; bot auto-moves on its turn.
+- Promotion: when a pawn reaches last rank, UI prompts for queen/rook/bishop/knight, then replays the move with `promotion`.
+- Undo/Reset use engine methods and refresh board + history. Pending promotion blocks bot play until resolved.
+
+**Styling**
+- Keep muted, minimal visuals; no heavy cards. Edge-only labels; squares remain true squares.
+- New controls should match existing button/option styles; prefer flat borders and light hover.
+
+**Safety & Quality**
+- No silent fallbacks: return errors from engine/bot calls and show them. Avoid nested try/catch; fix root causes.
+- Use Yarn commands from README. Respect existing TypeScript standards (see `.cursor/rules/typescript.mdc`).
