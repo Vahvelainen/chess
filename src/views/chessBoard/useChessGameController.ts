@@ -1,0 +1,140 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChessGame } from "../../engine/ChessGame";
+import { BoardState } from "../../engine/board/BoardState";
+import { Color, PieceType } from "../../engine/Piece";
+import { MoveRecord } from "../../engine/Move";
+import { Bot } from "../../bots/Bot";
+import { fileLabels, mapBoardToSquares, rankLabels, SquareView } from "./boardLayoutHelpers";
+import { createHandleDrop, handleDragOver, handleDragStart } from "./dragDropHandlers";
+
+export interface PromotionRequest {
+  readonly from: { file: number; rank: number };
+  readonly to: { file: number; rank: number };
+  readonly color: Color;
+}
+
+export function useChessGameController(bot: Bot) {
+  const gameRef = useRef<ChessGame>(new ChessGame());
+  const botRef = useRef<Bot>(bot);
+  const botRunning = useRef(false);
+  const [board, setBoard] = useState<BoardState>(gameRef.current.getBoard());
+  const [history, setHistory] = useState<MoveRecord[]>(gameRef.current.getHistory());
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [mode, setMode] = useState<"pvp" | "bot">("pvp");
+  const [humanColor, setHumanColor] = useState<Color>("white");
+  const [pendingPromotion, setPendingPromotion] = useState<PromotionRequest | undefined>(undefined);
+
+  const squares = useMemo(() => mapBoardToSquares(board), [board]);
+  const activeColor = gameRef.current.getActiveColor();
+  const lastMove = history[history.length - 1];
+  const botColor: Color = humanColor === "white" ? "black" : "white";
+  const isHumanTurn = mode === "pvp" || activeColor === humanColor;
+
+  function refreshState(): void {
+    setBoard(gameRef.current.getBoard());
+    setHistory(gameRef.current.getHistory());
+  }
+
+  const handleDrop = createHandleDrop({
+    isHumanTurn,
+    game: gameRef.current,
+    setError,
+    setPendingPromotion,
+    refresh: refreshState
+  });
+
+  function handleReset(): void {
+    gameRef.current.reset();
+    refreshState();
+    setError(undefined);
+  }
+
+  function handleUndo(): void {
+    const result = gameRef.current.undo();
+    if (!result.success && result.error) {
+      setError(result.error);
+      return;
+    }
+    refreshState();
+    setError(undefined);
+  }
+
+  useEffect(() => {
+    if (mode !== "bot" || pendingPromotion || activeColor !== botColor || botRunning.current) {
+      return;
+    }
+    botRunning.current = true;
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      const move = botRef.current.selectMove(gameRef.current);
+      if (!move) {
+        setError("Bot has no moves");
+        botRunning.current = false;
+        return;
+      }
+      const result = gameRef.current.playMove(move);
+      botRunning.current = false;
+      if (result.success) {
+        setBoard(gameRef.current.getBoard());
+        setHistory(gameRef.current.getHistory());
+        setError(undefined);
+        return;
+      }
+      if (result.error) {
+        setError(result.error);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      botRunning.current = false;
+    };
+  }, [mode, activeColor, botColor, pendingPromotion]);
+
+  function handlePromotionChoice(choice: PieceType): void {
+    if (!pendingPromotion) {
+      return;
+    }
+    const result = gameRef.current.playMove({ from: pendingPromotion.from, to: pendingPromotion.to, promotion: choice });
+    if (result.success) {
+      setPendingPromotion(undefined);
+      refreshState();
+      setError(undefined);
+      return;
+    }
+    if (result.error) {
+      setError(result.error);
+    }
+    setPendingPromotion(undefined);
+  }
+
+  function handlePromotionCancel(): void {
+    setPendingPromotion(undefined);
+  }
+
+  return {
+    squares,
+    files: fileLabels,
+    ranks: rankLabels,
+    activeColor,
+    history,
+    lastMove,
+    mode,
+    humanColor,
+    isHumanTurn,
+    pendingPromotion,
+    error,
+    handleDragStart,
+    handleDragOver,
+    handleDrop,
+    handleReset,
+    handleUndo,
+    handlePromotionChoice,
+    handlePromotionCancel,
+    setMode,
+    setHumanColor
+  };
+}
