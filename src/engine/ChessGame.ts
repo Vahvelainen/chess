@@ -1,5 +1,6 @@
 import { BoardState } from "./board/BoardState";
 import { Move, MoveRecord, formatLongAlgebraic } from "./Move";
+import { Color } from "./Piece";
 import { generateLegalMoves } from "./rules/MoveGenerator";
 import { applyMove } from "./rules/StateTransitions";
 import { isKingInCheck } from "./rules/Attack";
@@ -13,10 +14,12 @@ export interface PlayResult {
 export class ChessGame {
   private state: BoardState;
   private history: MoveRecord[];
+  private previousStates: BoardState[];
 
   constructor(fen?: string) {
     this.state = fen ? BoardState.fromFEN(fen) : BoardState.initial();
     this.history = [];
+    this.previousStates = [];
   }
 
   getLegalMoves(): Move[] {
@@ -33,6 +36,7 @@ export class ChessGame {
     if (!movingPiece) {
       return { success: false, error: "No piece to move" };
     }
+    this.previousStates.push(this.state);
     const nextState = applyMove(this.state, matched);
     const opponent = nextState.meta.activeColor;
     const inCheck = isKingInCheck(nextState, opponent);
@@ -54,6 +58,29 @@ export class ChessGame {
 
   getBoard(): BoardState {
     return this.state;
+  }
+
+  getActiveColor(): Color {
+    return this.state.meta.activeColor;
+  }
+
+  undo(): PlayResult {
+    if (this.history.length === 0 || this.previousStates.length === 0) {
+      return { success: false, error: "No moves to undo" };
+    }
+    const lastState = this.previousStates.pop();
+    if (!lastState) {
+      return { success: false, error: "No moves to undo" };
+    }
+    this.history.pop();
+    this.state = lastState;
+    return { success: true };
+  }
+
+  reset(fen?: string): void {
+    this.state = fen ? BoardState.fromFEN(fen) : BoardState.initial();
+    this.history = [];
+    this.previousStates = [];
   }
 }
 

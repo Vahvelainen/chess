@@ -1,0 +1,196 @@
+import React, { useMemo, useRef, useState } from "react";
+import { ChessGame } from "../engine/ChessGame";
+import { BoardState } from "../engine/board/BoardState";
+import { createSquare, Square, toAlgebraic } from "../engine/board/Square";
+import { Piece } from "../engine/Piece";
+import { MoveRecord } from "../engine/Move";
+
+interface SquareView {
+  readonly file: number;
+  readonly rank: number;
+  readonly piece?: Piece;
+  readonly isLight: boolean;
+  readonly algebraic: string;
+}
+
+function pieceLabel(piece: Piece): string {
+  const letters: Record<Piece["type"], string> = {
+    pawn: "P",
+    knight: "N",
+    bishop: "B",
+    rook: "R",
+    queen: "Q",
+    king: "K"
+  };
+  return letters[piece.type];
+}
+
+export function ChessBoardView(): React.JSX.Element {
+  const gameRef = useRef<ChessGame>(new ChessGame());
+  const [board, setBoard] = useState<BoardState>(gameRef.current.getBoard());
+  const [history, setHistory] = useState<MoveRecord[]>(gameRef.current.getHistory());
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  const squares = useMemo(() => {
+    const snapshot = board.snapshot();
+    const list: SquareView[] = [];
+    for (let rank = 7; rank >= 0; rank -= 1) {
+      for (let file = 0; file < 8; file += 1) {
+        const index = rank * 8 + file;
+        const piece = snapshot[index];
+        const algebraic = toAlgebraic(createSquare(file, rank));
+        list.push({
+          file,
+          rank,
+          piece,
+          isLight: (file + rank) % 2 === 0,
+          algebraic
+        });
+      }
+    }
+    return list;
+  }, [board]);
+
+  function refreshState(): void {
+    setBoard(gameRef.current.getBoard());
+    setHistory(gameRef.current.getHistory());
+  }
+
+  function handleDragStart(event: React.DragEvent<HTMLDivElement>, square: SquareView): void {
+    if (!square.piece) {
+      return;
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData(
+      "application/x-chess-from",
+      JSON.stringify({ file: square.file, rank: square.rank })
+    );
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>, target: SquareView): void {
+    event.preventDefault();
+    const payload = event.dataTransfer.getData("application/x-chess-from");
+    if (!payload) {
+      return;
+    }
+    let from: Square | undefined;
+    try {
+      const parsed = JSON.parse(payload) as { file: number; rank: number };
+      from = createSquare(parsed.file, parsed.rank);
+    } catch (e) {
+      setError("Could not parse move");
+      return;
+    }
+    const to = createSquare(target.file, target.rank);
+    if (from.file === to.file && from.rank === to.rank) {
+      return;
+    }
+    const result = gameRef.current.playMove({ from, to });
+    if (result.success) {
+      refreshState();
+      setError(undefined);
+      return;
+    }
+    if (result.error) {
+      setError(result.error);
+    }
+  }
+
+  function handleReset(): void {
+    gameRef.current.reset();
+    refreshState();
+    setError(undefined);
+  }
+
+  function handleUndo(): void {
+    const result = gameRef.current.undo();
+    if (!result.success && result.error) {
+      setError(result.error);
+      return;
+    }
+    refreshState();
+    setError(undefined);
+  }
+
+  const activeColor = gameRef.current.getActiveColor();
+  const lastMove = history[history.length - 1];
+
+  return (
+    <main className="app-shell">
+      <section className="board-panel">
+        <header className="panel-header">
+          <div className="panel-title">Chess</div>
+          <div className="panel-status">
+            <span className="status-dot" data-color={activeColor} />
+            {activeColor === "white" ? "White to move" : "Black to move"}
+          </div>
+        </header>
+
+        <div className="board-wrapper">
+          <div className="file-labels top-labels">
+            {["a", "b", "c", "d", "e", "f", "g", "h"].map((file) => (
+              <span key={`file-top-${file}`}>{file}</span>
+            ))}
+          </div>
+          <div className="board-grid">
+            {squares.map((square) => (
+              <div
+                key={`${square.file}-${square.rank}`}
+                className={`square ${square.isLight ? "light" : "dark"}`}
+                draggable={Boolean(square.piece && square.piece.color === activeColor)}
+                onDragStart={(event) => handleDragStart(event, square)}
+                onDragOver={handleDragOver}
+                onDrop={(event) => handleDrop(event, square)}
+              >
+                <span className="rank-label">{square.rank + 1}</span>
+                {square.piece ? (
+                  <div className={`piece piece-${square.piece.color}`}>
+                    <span className="piece-label">{pieceLabel(square.piece)}</span>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="file-labels bottom-labels">
+            {["a", "b", "c", "d", "e", "f", "g", "h"].map((file) => (
+              <span key={`file-bottom-${file}`}>{file}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="controls-row">
+          <button type="button" className="control-button" onClick={handleUndo}>
+            Undo
+          </button>
+          <button type="button" className="control-button" onClick={handleReset}>
+            Reset
+          </button>
+        </div>
+
+        {error ? <div className="error-banner">{error}</div> : null}
+      </section>
+
+      <aside className="history-panel">
+        <header className="panel-header">
+          <div className="panel-title">Moves</div>
+          <div className="panel-subtitle">
+            {history.length === 0 ? "No moves yet" : `${history.length} move${history.length > 1 ? "s" : ""}`}
+          </div>
+        </header>
+        <ol className="move-list">
+          {history.map((record, index) => (
+            <li key={`${record.notation}-${index}`} className={record === lastMove ? "move-item active" : "move-item"}>
+              <span className="move-index">{index + 1}.</span>
+              <span className="move-notation">{record.notation}</span>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    </main>
+  );
+}
