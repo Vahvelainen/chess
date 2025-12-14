@@ -30,7 +30,7 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 200px 1fr 260px;
   gap: 20px;
   max-width: 1100px;
   margin: 0 auto;
@@ -44,6 +44,12 @@ body {
   border: none;
   background: transparent;
   box-shadow: none;
+}
+
+.side-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .panel-header {
@@ -261,6 +267,38 @@ body {
   font-weight: 500;
 }
 
+.option-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.option-button {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: transparent;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.option-button.active {
+  border-color: var(--accent);
+  background: #e9ecf2;
+  color: var(--accent);
+}
+
+.option-button:hover {
+  border-color: #cbd5e1;
+  background: #e5e7eb;
+}
+
+.hint-text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .drag-ghost {
   position: absolute;
   top: -9999px;
@@ -274,7 +312,19 @@ body {
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
-    max-width: 620px;
+    max-width: 640px;
+    gap: 16px;
+  }
+
+  .side-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .option-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 240px;
   }
 
   .board-grid-shell {
@@ -283,6 +333,6 @@ body {
   }
 
   .history-panel {
-    margin-top: 8px;
+    margin-top: 4px;
   }
 }

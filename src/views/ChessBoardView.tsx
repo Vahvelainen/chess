@@ -1,9 +1,11 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChessGame } from "../engine/ChessGame";
 import { BoardState } from "../engine/board/BoardState";
 import { createSquare, Square } from "../engine/board/Square";
-import { Piece } from "../engine/Piece";
+import { Color, Piece } from "../engine/Piece";
 import { MoveRecord } from "../engine/Move";
+import { BaseBot } from "../bots/BaseBot";
+import { Bot } from "../bots/Bot";
 
 interface SquareView {
   readonly file: number;
@@ -26,9 +28,13 @@ function pieceLabel(piece: Piece): string {
 
 export function ChessBoardView(): React.JSX.Element {
   const gameRef = useRef<ChessGame>(new ChessGame());
+  const botRef = useRef<Bot>(new BaseBot());
+  const botRunning = useRef(false);
   const [board, setBoard] = useState<BoardState>(gameRef.current.getBoard());
   const [history, setHistory] = useState<MoveRecord[]>(gameRef.current.getHistory());
   const [error, setError] = useState<string | undefined>(undefined);
+  const [mode, setMode] = useState<"pvp" | "bot">("pvp");
+  const [humanColor, setHumanColor] = useState<Color>("white");
 
   const squares = useMemo(() => {
     const snapshot = board.snapshot();
@@ -83,6 +89,9 @@ export function ChessBoardView(): React.JSX.Element {
   }
 
   function handleDrop(event: React.DragEvent<HTMLDivElement>, target: SquareView): void {
+    if (!isHumanTurn) {
+      return;
+    }
     event.preventDefault();
     const payload = event.dataTransfer.getData("application/x-chess-from");
     if (!payload) {
@@ -131,9 +140,85 @@ export function ChessBoardView(): React.JSX.Element {
   const lastMove = history[history.length - 1];
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"];
+  const botColor: Color = humanColor === "white" ? "black" : "white";
+  const isHumanTurn = mode === "pvp" || activeColor === humanColor;
+
+  useEffect(() => {
+    if (mode !== "bot") {
+      return;
+    }
+    if (activeColor !== botColor) {
+      return;
+    }
+    if (botRunning.current) {
+      return;
+    }
+    botRunning.current = true;
+    const move = botRef.current.selectMove(gameRef.current);
+    if (!move) {
+      setError("Bot has no moves");
+      botRunning.current = false;
+      return;
+    }
+    const result = gameRef.current.playMove(move);
+    botRunning.current = false;
+    if (result.success) {
+      setBoard(gameRef.current.getBoard());
+      setHistory(gameRef.current.getHistory());
+      setError(undefined);
+      return;
+    }
+    if (result.error) {
+      setError(result.error);
+    }
+  }, [mode, activeColor, botColor]);
 
   return (
     <main className="app-shell">
+      <aside className="side-menu">
+        <div className="panel-header">
+          <div className="panel-title">Mode</div>
+        </div>
+        <div className="option-group">
+          <button
+            type="button"
+            className={`option-button ${mode === "pvp" ? "active" : ""}`}
+            onClick={() => setMode("pvp")}
+          >
+            PvP
+          </button>
+          <button
+            type="button"
+            className={`option-button ${mode === "bot" ? "active" : ""}`}
+            onClick={() => setMode("bot")}
+          >
+            Bot
+          </button>
+        </div>
+        {mode === "bot" ? (
+          <>
+            <div className="panel-subtitle">Human plays</div>
+            <div className="option-group">
+              <button
+                type="button"
+                className={`option-button ${humanColor === "white" ? "active" : ""}`}
+                onClick={() => setHumanColor("white")}
+              >
+                White
+              </button>
+              <button
+                type="button"
+                className={`option-button ${humanColor === "black" ? "active" : ""}`}
+                onClick={() => setHumanColor("black")}
+              >
+                Black
+              </button>
+            </div>
+            <div className="hint-text">Bot moves automatically on its turn.</div>
+          </>
+        ) : null}
+      </aside>
+
       <section className="board-panel">
         <header className="panel-header">
           <div className="panel-title">Chess</div>
@@ -160,7 +245,7 @@ export function ChessBoardView(): React.JSX.Element {
                 <div
                   key={`${square.file}-${square.rank}`}
                   className={`square ${square.isLight ? "light" : "dark"}`}
-                  draggable={Boolean(square.piece && square.piece.color === activeColor)}
+                  draggable={Boolean(isHumanTurn && square.piece && square.piece.color === activeColor)}
                   onDragStart={(event) => handleDragStart(event, square)}
                   onDragOver={handleDragOver}
                   onDrop={(event) => handleDrop(event, square)}
