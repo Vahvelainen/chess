@@ -21,7 +21,7 @@ export function mapBoardToSquares(board: BoardState): SquareView[] {
         file,
         rank,
         piece: snapshot[index],
-        isLight: (file + rank) % 2 === 0
+        isLight: (file + rank) % 2 === 1
       });
     }
   }
