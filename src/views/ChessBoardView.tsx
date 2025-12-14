@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { ChessGame } from "../engine/ChessGame";
 import { BoardState } from "../engine/board/BoardState";
-import { createSquare, Square, toAlgebraic } from "../engine/board/Square";
+import { createSquare, Square } from "../engine/board/Square";
 import { Piece } from "../engine/Piece";
 import { MoveRecord } from "../engine/Move";
 
@@ -10,7 +10,6 @@ interface SquareView {
   readonly rank: number;
   readonly piece?: Piece;
   readonly isLight: boolean;
-  readonly algebraic: string;
 }
 
 function pieceLabel(piece: Piece): string {
@@ -38,13 +37,11 @@ export function ChessBoardView(): React.JSX.Element {
       for (let file = 0; file < 8; file += 1) {
         const index = rank * 8 + file;
         const piece = snapshot[index];
-        const algebraic = toAlgebraic(createSquare(file, rank));
         list.push({
           file,
           rank,
           piece,
-          isLight: (file + rank) % 2 === 0,
-          algebraic
+          isLight: (file + rank) % 2 === 0
         });
       }
     }
@@ -65,6 +62,19 @@ export function ChessBoardView(): React.JSX.Element {
       "application/x-chess-from",
       JSON.stringify({ file: square.file, rank: square.rank })
     );
+    const ghost = document.createElement("div");
+    ghost.className = `drag-ghost piece piece-${square.piece.color}`;
+    ghost.style.width = "56px";
+    ghost.style.height = "56px";
+    const label = document.createElement("span");
+    label.className = "piece-label";
+    label.textContent = pieceLabel(square.piece);
+    ghost.appendChild(label);
+    document.body.appendChild(ghost);
+    event.dataTransfer.setDragImage(ghost, 28, 28);
+    setTimeout(() => {
+      document.body.removeChild(ghost);
+    }, 0);
   }
 
   function handleDragOver(event: React.DragEvent<HTMLDivElement>): void {
@@ -119,6 +129,8 @@ export function ChessBoardView(): React.JSX.Element {
 
   const activeColor = gameRef.current.getActiveColor();
   const lastMove = history[history.length - 1];
+  const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
   return (
     <main className="app-shell">
@@ -132,34 +144,45 @@ export function ChessBoardView(): React.JSX.Element {
         </header>
 
         <div className="board-wrapper">
-          <div className="file-labels top-labels">
-            {["a", "b", "c", "d", "e", "f", "g", "h"].map((file) => (
-              <span key={`file-top-${file}`}>{file}</span>
-            ))}
-          </div>
-          <div className="board-grid">
-            {squares.map((square) => (
-              <div
-                key={`${square.file}-${square.rank}`}
-                className={`square ${square.isLight ? "light" : "dark"}`}
-                draggable={Boolean(square.piece && square.piece.color === activeColor)}
-                onDragStart={(event) => handleDragStart(event, square)}
-                onDragOver={handleDragOver}
-                onDrop={(event) => handleDrop(event, square)}
-              >
-                <span className="rank-label">{square.rank + 1}</span>
-                {square.piece ? (
-                  <div className={`piece piece-${square.piece.color}`}>
-                    <span className="piece-label">{pieceLabel(square.piece)}</span>
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-          <div className="file-labels bottom-labels">
-            {["a", "b", "c", "d", "e", "f", "g", "h"].map((file) => (
-              <span key={`file-bottom-${file}`}>{file}</span>
-            ))}
+          <div className="board-grid-shell">
+            <div className="file-labels top-labels">
+              {files.map((file) => (
+                <span key={`file-top-${file}`}>{file}</span>
+              ))}
+            </div>
+            <div className="rank-labels left-labels">
+              {ranks.map((rank) => (
+                <span key={`rank-left-${rank}`}>{rank}</span>
+              ))}
+            </div>
+            <div className="board-grid">
+              {squares.map((square) => (
+                <div
+                  key={`${square.file}-${square.rank}`}
+                  className={`square ${square.isLight ? "light" : "dark"}`}
+                  draggable={Boolean(square.piece && square.piece.color === activeColor)}
+                  onDragStart={(event) => handleDragStart(event, square)}
+                  onDragOver={handleDragOver}
+                  onDrop={(event) => handleDrop(event, square)}
+                >
+                  {square.piece ? (
+                    <div className={`piece piece-${square.piece.color}`}>
+                      <span className="piece-label">{pieceLabel(square.piece)}</span>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <div className="rank-labels right-labels">
+              {ranks.map((rank) => (
+                <span key={`rank-right-${rank}`}>{rank}</span>
+              ))}
+            </div>
+            <div className="file-labels bottom-labels">
+              {files.map((file) => (
+                <span key={`file-bottom-${file}`}>{file}</span>
+              ))}
+            </div>
           </div>
         </div>
 
