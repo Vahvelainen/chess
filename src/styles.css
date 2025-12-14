@@ -176,11 +176,11 @@ body {
 }
 
 .piece-white {
-  filter: invert(1);
+  filter: brightness(0) invert(1) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
 }
 
 .piece-black {
-  filter: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
 }
 
 .controls-row {

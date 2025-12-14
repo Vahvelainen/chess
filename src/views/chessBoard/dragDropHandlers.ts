@@ -19,19 +19,42 @@ export function handleDragStart(event: React.DragEvent<HTMLDivElement>, square: 
   }
   event.dataTransfer.effectAllowed = "move";
   event.dataTransfer.setData("application/x-chess-from", JSON.stringify({ file: square.file, rank: square.rank }));
+  const sprite = pieceSprite(square.piece);
   const ghost = document.createElement("img");
   ghost.className = `drag-ghost piece piece-${square.piece.color}`;
   ghost.width = 56;
   ghost.height = 56;
-  ghost.src = pieceSprite(square.piece);
-  if (square.piece.color === "white") {
-    ghost.style.filter = "invert(1)";
-  }
+  ghost.src = sprite;
+  ghost.draggable = false;
+  ghost.style.position = "absolute";
+  ghost.style.top = "-9999px";
+  ghost.style.left = "-9999px";
+  const filter =
+    square.piece.color === "white"
+      ? "brightness(0) invert(1) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35))"
+      : "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35))";
+  ghost.style.filter = filter;
+  ghost.style.webkitFilter = filter;
   document.body.appendChild(ghost);
-  event.dataTransfer.setDragImage(ghost, 28, 28);
-  setTimeout(() => {
-    document.body.removeChild(ghost);
-  }, 0);
+
+  const target = event.target as HTMLElement;
+  const cleanup = (): void => {
+    if (ghost.parentElement) {
+      ghost.parentElement.removeChild(ghost);
+    }
+  };
+
+  const applyDragImage = (): void => {
+    event.dataTransfer.setDragImage(ghost, 28, 28);
+  };
+
+  if (ghost.complete) {
+    applyDragImage();
+  } else {
+    ghost.onload = applyDragImage;
+  }
+
+  target.addEventListener("dragend", cleanup, { once: true });
 }
 
 export function handleDragOver(event: React.DragEvent<HTMLDivElement>): void {
