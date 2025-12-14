@@ -4,7 +4,7 @@ import { BoardState } from "../engine/board/BoardState";
 import { createSquare, Square } from "../engine/board/Square";
 import { Color, Piece, PieceType } from "../engine/Piece";
 import { MoveRecord } from "../engine/Move";
-import { BaseBot } from "../bots/BaseBot";
+import { AlphaBetaBot } from "../bots/AlphaBetaBot";
 import { Bot } from "../bots/Bot";
 
 interface SquareView {
@@ -28,7 +28,7 @@ function pieceLabel(piece: Piece): string {
 
 export function ChessBoardView(): React.JSX.Element {
   const gameRef = useRef<ChessGame>(new ChessGame());
-  const botRef = useRef<Bot>(new BaseBot());
+  const botRef = useRef<Bot>(new AlphaBetaBot());
   const botRunning = useRef(false);
   const [board, setBoard] = useState<BoardState>(gameRef.current.getBoard());
   const [history, setHistory] = useState<MoveRecord[]>(gameRef.current.getHistory());
