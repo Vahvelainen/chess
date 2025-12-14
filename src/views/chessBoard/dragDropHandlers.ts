@@ -1,7 +1,7 @@
 import React from "react";
 import { ChessGame } from "../../engine/ChessGame";
 import { createSquare, Square } from "../../engine/board/Square";
-import { pieceLabel } from "./pieceHelpers";
+import { pieceSprite } from "./pieceHelpers";
 import { PromotionRequest } from "./useChessGameController";
 import { SquareView } from "./boardLayoutHelpers";
 
@@ -19,14 +19,14 @@ export function handleDragStart(event: React.DragEvent<HTMLDivElement>, square: 
   }
   event.dataTransfer.effectAllowed = "move";
   event.dataTransfer.setData("application/x-chess-from", JSON.stringify({ file: square.file, rank: square.rank }));
-  const ghost = document.createElement("div");
+  const ghost = document.createElement("img");
   ghost.className = `drag-ghost piece piece-${square.piece.color}`;
-  ghost.style.width = "56px";
-  ghost.style.height = "56px";
-  const label = document.createElement("span");
-  label.className = "piece-label";
-  label.textContent = pieceLabel(square.piece);
-  ghost.appendChild(label);
+  ghost.width = 56;
+  ghost.height = 56;
+  ghost.src = pieceSprite(square.piece);
+  if (square.piece.color === "white") {
+    ghost.style.filter = "invert(1)";
+  }
   document.body.appendChild(ghost);
   event.dataTransfer.setDragImage(ghost, 28, 28);
   setTimeout(() => {

@@ -1,6 +1,6 @@
 import React from "react";
 import { Color } from "../../engine/Piece";
-import { pieceLabel } from "./pieceHelpers";
+import { pieceSprite } from "./pieceHelpers";
 import { SquareView } from "./boardLayoutHelpers";
 
 interface Props {
@@ -38,22 +38,29 @@ export function BoardGrid({
           ))}
         </div>
         <div className="board-grid">
-          {squares.map((square) => (
-            <div
-              key={`${square.file}-${square.rank}`}
-              className={`square ${square.isLight ? "light" : "dark"}`}
-              draggable={Boolean(isHumanTurn && square.piece && square.piece.color === activeColor)}
-              onDragStart={(event) => onDragStart(event, square)}
-              onDragOver={onDragOver}
-              onDrop={(event) => onDrop(event, square)}
-            >
-              {square.piece ? (
-                <div className={`piece piece-${square.piece.color}`}>
-                  <span className="piece-label">{pieceLabel(square.piece)}</span>
-                </div>
-              ) : null}
-            </div>
-          ))}
+          {squares.map((square) => {
+            const sprite = square.piece ? pieceSprite(square.piece) : undefined;
+
+            return (
+              <div
+                key={`${square.file}-${square.rank}`}
+                className={`square ${square.isLight ? "light" : "dark"}`}
+                draggable={Boolean(isHumanTurn && square.piece && square.piece.color === activeColor)}
+                onDragStart={(event) => onDragStart(event, square)}
+                onDragOver={onDragOver}
+                onDrop={(event) => onDrop(event, square)}
+              >
+                {square.piece && sprite ? (
+                  <img
+                    className={`piece piece-${square.piece.color}`}
+                    src={sprite}
+                    alt={`${square.piece.color} ${square.piece.type}`}
+                    draggable={false}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
         </div>
         <div className="rank-labels right-labels">
           {ranks.map((rank) => (
