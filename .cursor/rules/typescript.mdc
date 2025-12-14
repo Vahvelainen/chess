@@ -1,0 +1,50 @@
+---
+alwaysApply: true
+---
+
+## TypeScript Standards
+
+**Imports & Exports:**
+- Named exports only, declared inline: `export function myFunc()`
+- NO default exports
+- NO unnecessary `index.ts` files
+
+**Functions & Components:**
+- Use `function` keyword for named functions (not `const`)
+- React component props: interface named `Props` (unless conflict/export needed)
+- Use `interface` not `type` for props
+
+**Code Quality:**
+- Small files, small functions, clean code focus
+- Comments mark bad code - refactor instead
+- NO null types (use undefined)
+
+**Tooling & Libraries:**
+- Yarn for package management
+- MUI for UI elements
+- Zod for type guards
+- Zustand for state management
+- Axios-based API clients extending BaseApiClient
+
+## Frontend Structure
+
+```
+src/
+  stores/         # Zustand stores
+  api/            # Backend interactions (Axios clients)
+  components/     # Atomic reusable components
+    SomeComponent/
+      SomeComponent.tsx    # Main component
+      SubComponent.tsx     # Subcomponents in same folder
+  views/          # Non-reusable views with co-located components
+  utils/          # Shared utilities
+```
+
+## General Principles
+
+**Day 0 POC Philosophy:**
+- NO fallbacks for errors - surface problems immediately
+- NO premature optimization
+- NO feature creep - stick to scope
+- DO solve problems correctly - understand root causes
+- Validate assumptions early with real data
