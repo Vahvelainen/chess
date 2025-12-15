@@ -1,5 +1,5 @@
 import { BoardState } from "./board/BoardState";
-import { Move, MoveRecord, formatLongAlgebraic } from "./Move";
+import { Move, MoveRecord, formatStandardAlgebraic } from "./Move";
 import { Color } from "./Piece";
 import { generateLegalMoves } from "./rules/MoveGenerator";
 import { applyMove } from "./rules/StateTransitions";
@@ -42,7 +42,7 @@ export class ChessGame {
     const inCheck = isKingInCheck(nextState, opponent);
     const opponentMoves = generateLegalMoves(nextState);
     const mate = inCheck && opponentMoves.length === 0;
-    const notation = formatLongAlgebraic(matched, movingPiece, inCheck, mate);
+    const notation = formatStandardAlgebraic(matched, movingPiece, this.state, legal, inCheck, mate);
     this.state = nextState;
     this.history.push({ move: matched, notation });
     return { success: true, notation };

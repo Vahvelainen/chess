@@ -1,0 +1,3 @@
+- Standard notation
+- Stalemates and repetitions to game engine
+- Notification of ended games to the UI (back button should still work)

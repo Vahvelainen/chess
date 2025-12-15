@@ -49,6 +49,13 @@ body {
   box-shadow: none;
 }
 
+.history-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+}
+
 .side-menu {
   display: flex;
   flex-direction: column;
@@ -227,6 +234,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: calc(min(90vw, 520px) + 140px);
+  padding-right: 6px;
+  scroll-behavior: smooth;
 }
 
 .move-item {
@@ -375,5 +388,15 @@ body {
 
   .history-panel {
     margin-top: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .history-panel {
+    height: 180px;
+  }
+
+  .move-list {
+    max-height: 100%;
   }
 }
