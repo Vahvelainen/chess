@@ -9,9 +9,9 @@ interface Props {
   readonly ranks: string[];
   readonly activeColor: Color;
   readonly isHumanTurn: boolean;
-  readonly onDragStart: (event: React.DragEvent<HTMLDivElement>, square: SquareView) => void;
-  readonly onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
-  readonly onDrop: (event: React.DragEvent<HTMLDivElement>, square: SquareView) => void;
+  readonly onDragStart: (event: React.DragEvent<HTMLDivElement> | DragEvent, square: SquareView) => void;
+  readonly onDragOver: (event: React.DragEvent<HTMLDivElement> | DragEvent) => void;
+  readonly onDrop: (event: React.DragEvent<HTMLDivElement> | DragEvent, square: SquareView) => void;
   readonly onTouchStart: (event: React.TouchEvent<HTMLDivElement>, square: SquareView) => void;
   readonly onTouchMove: (event: React.TouchEvent<HTMLDivElement>) => void;
   readonly onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;

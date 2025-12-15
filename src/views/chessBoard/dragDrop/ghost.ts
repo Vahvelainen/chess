@@ -1,6 +1,8 @@
 import { pieceSprite } from "../pieceHelpers";
 import { SquareView } from "../boardLayoutHelpers";
 
+const transparentPixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
 export function createGhostElement(piece: SquareView["piece"] | undefined): HTMLImageElement | undefined {
   if (!piece) {
     return undefined;
@@ -37,4 +39,12 @@ export function updateGhostPosition(ghost: HTMLImageElement | undefined, x: numb
   }
   ghost.style.left = `${x}px`;
   ghost.style.top = `${y}px`;
+}
+
+export function createTransparentPixelImage(): HTMLImageElement {
+  const image = document.createElement("img");
+  image.src = transparentPixel;
+  image.width = image.height = 1;
+  // Keep a 1x1 transparent pixel to suppress the browser's default drag image
+  return image;
 }
