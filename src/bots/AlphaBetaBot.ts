@@ -10,6 +10,7 @@ import { materialScore } from "./Evaluation";
 
 const MAX_DEPTH = 3;
 const CHECKMATE_SCORE = 1000000;
+const DRAW_PENALTY = -1;
 
 export class AlphaBetaBot implements Bot {
   readonly name = "Alpha-Beta Depth 5";
@@ -83,7 +84,7 @@ export class AlphaBetaBot implements Bot {
         const distanceBonus = depth;
         return losingTurn ? -CHECKMATE_SCORE + distanceBonus : CHECKMATE_SCORE - distanceBonus;
       }
-      return 0;
+      return DRAW_PENALTY;
     }
     if (depth === 0) {
       return materialScore(state, perspective);

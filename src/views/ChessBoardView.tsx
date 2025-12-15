@@ -44,7 +44,9 @@ export function ChessBoardView(): React.JSX.Element {
 
         <ControlsRow onUndo={controller.handleUndo} onReset={controller.handleReset} />
 
-        {controller.error ? <div className="error-banner">{controller.error}</div> : null}
+        {controller.banner ? (
+          <div className={`banner banner-${controller.banner.tone}`}>{controller.banner.message}</div>
+        ) : null}
       </section>
 
       <HistoryPanel history={controller.history} lastMove={controller.lastMove} />

@@ -2,11 +2,13 @@ import { ChessGame } from "../../../engine/ChessGame";
 import { createSquare, Square } from "../../../engine/board/Square";
 import { PromotionRequest } from "../useChessGameController";
 import { SquareView } from "../boardLayoutHelpers";
+import { GameEndStatus } from "../../../engine/Move";
 
 export interface DropContext {
   readonly isHumanTurn: boolean;
   readonly game: ChessGame;
   readonly setError: (error: string | undefined) => void;
+  readonly setEndStatus: (status: GameEndStatus | undefined) => void;
   readonly setPendingPromotion: (request: PromotionRequest | undefined) => void;
   readonly refresh: () => void;
 }
@@ -25,11 +27,13 @@ export function playMove(context: DropContext, from: Square, to: Square): void {
   if (result.success) {
     context.refresh();
     context.setError(undefined);
+    context.setEndStatus(result.endStatus);
     return;
   }
   if (result.error) {
     context.setError(result.error);
   }
+  context.setEndStatus(undefined);
 }
 
 export function resolveSquareFromElement(element: Element | null): Square | undefined {

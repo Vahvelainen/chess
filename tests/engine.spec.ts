@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ChessGame } from "../src/engine/ChessGame";
 import { fromAlgebraic } from "../src/engine/board/Square";
+import { GameEndStatus } from "../src/engine/Move";
 
 function move(from: string, to: string, promotion?: "queen" | "rook" | "bishop" | "knight") {
   return { from: fromAlgebraic(from), to: fromAlgebraic(to), promotion };
@@ -46,5 +47,34 @@ describe("ChessGame", () => {
     const game = new ChessGame();
     const result = game.playMove(move("e2", "e5"));
     expect(result.success).toBe(false);
+  });
+
+  it("detects stalemate after a move", () => {
+    const game = new ChessGame("7k/5Q2/6K1/8/8/8/8/8 w - - 0 1");
+    const result = game.playMove(move("f8", "f7"));
+    expect(result.success).toBe(true);
+    expect(result.endStatus?.type).toBe<GameEndStatus["type"]>("stalemate");
+    expect(game.getEndStatus()?.type).toBe("stalemate");
+  });
+
+  it("detects threefold repetition", () => {
+    const game = new ChessGame();
+    const sequence = [
+      move("g1", "f3"),
+      move("g8", "f6"),
+      move("f3", "g1"),
+      move("f6", "g8"),
+      move("g1", "f3"),
+      move("g8", "f6"),
+      move("f3", "g1"),
+      move("f6", "g8")
+    ];
+    let latest: ReturnType<ChessGame["playMove"]> | undefined;
+    sequence.forEach((m) => {
+      latest = game.playMove(m);
+      expect(latest.success).toBe(true);
+    });
+    expect(latest?.endStatus?.type).toBe<GameEndStatus["type"]>("threefold-repetition");
+    expect(game.getEndStatus()?.type).toBe("threefold-repetition");
   });
 });

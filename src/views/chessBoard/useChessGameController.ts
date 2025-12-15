@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChessGame } from "../../engine/ChessGame";
 import { BoardState } from "../../engine/board/BoardState";
 import { Color, PieceType } from "../../engine/Piece";
-import { MoveRecord } from "../../engine/Move";
+import { GameEndStatus, MoveRecord } from "../../engine/Move";
 import { Bot } from "../../bots/Bot";
 import { fileLabels, mapBoardToSquares, rankLabels, SquareView } from "./boardLayoutHelpers";
 import { handleDragOver, handleDragStart, createHandleDrop } from "./dragDrop/mouseHandlers";
@@ -21,6 +21,7 @@ export function useChessGameController(bot: Bot) {
   const [board, setBoard] = useState<BoardState>(gameRef.current.getBoard());
   const [history, setHistory] = useState<MoveRecord[]>(gameRef.current.getHistory());
   const [error, setError] = useState<string | undefined>(undefined);
+  const [endStatus, setEndStatus] = useState<GameEndStatus | undefined>(undefined);
   const [mode, setMode] = useState<"pvp" | "bot">("pvp");
   const [humanColor, setHumanColor] = useState<Color>("white");
   const [pendingPromotion, setPendingPromotion] = useState<PromotionRequest | undefined>(undefined);
@@ -40,6 +41,7 @@ export function useChessGameController(bot: Bot) {
     isHumanTurn,
     game: gameRef.current,
     setError,
+    setEndStatus,
     setPendingPromotion,
     refresh: refreshState
   });
@@ -48,6 +50,7 @@ export function useChessGameController(bot: Bot) {
     isHumanTurn,
     game: gameRef.current,
     setError,
+    setEndStatus,
     setPendingPromotion,
     refresh: refreshState
   });
@@ -56,6 +59,7 @@ export function useChessGameController(bot: Bot) {
     gameRef.current.reset();
     refreshState();
     setError(undefined);
+    setEndStatus(undefined);
   }
 
   function handleUndo(): void {
@@ -80,11 +84,16 @@ export function useChessGameController(bot: Bot) {
     if (completedUndos > 0) {
       refreshState();
       setError(undefined);
+      setEndStatus(gameRef.current.getEndStatus());
     }
   }
 
   useEffect(() => {
     if (mode !== "bot" || pendingPromotion || activeColor !== botColor || botRunning.current) {
+      return;
+    }
+    if (gameRef.current.getEndStatus()) {
+      setEndStatus(gameRef.current.getEndStatus());
       return;
     }
     botRunning.current = true;
@@ -105,6 +114,7 @@ export function useChessGameController(bot: Bot) {
         setBoard(gameRef.current.getBoard());
         setHistory(gameRef.current.getHistory());
         setError(undefined);
+        setEndStatus(result.endStatus);
         return;
       }
       if (result.error) {
@@ -127,6 +137,7 @@ export function useChessGameController(bot: Bot) {
       setPendingPromotion(undefined);
       refreshState();
       setError(undefined);
+      setEndStatus(result.endStatus);
       return;
     }
     if (result.error) {
@@ -139,6 +150,23 @@ export function useChessGameController(bot: Bot) {
     setPendingPromotion(undefined);
   }
 
+  function bannerState(): { message: string; tone: "error" | "info" | "success" } | undefined {
+    if (endStatus) {
+      if (endStatus.type === "checkmate") {
+        const message = `${endStatus.winner === "white" ? "White" : "Black"} wins by checkmate`;
+        return { message, tone: "success" };
+      }
+      if (endStatus.type === "stalemate") {
+        return { message: "Draw by stalemate", tone: "info" };
+      }
+      return { message: "Draw by threefold repetition", tone: "info" };
+    }
+    if (error) {
+      return { message: error, tone: "error" };
+    }
+    return undefined;
+  }
+
   return {
     squares,
     files: fileLabels,
@@ -146,11 +174,13 @@ export function useChessGameController(bot: Bot) {
     activeColor,
     history,
     lastMove,
+    banner: bannerState(),
     mode,
     humanColor,
     isHumanTurn,
     pendingPromotion,
     error,
+    endStatus,
     handleDragStart,
     handleDragOver,
     handleDrop,

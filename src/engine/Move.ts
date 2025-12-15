@@ -1,5 +1,5 @@
 import { BoardState } from "./board/BoardState";
-import { Piece, PieceType } from "./Piece";
+import { Color, Piece, PieceType } from "./Piece";
 import { Square, toAlgebraic } from "./board/Square";
 
 export interface Move {
@@ -14,7 +14,13 @@ export interface Move {
 export interface MoveRecord {
   readonly move: Move;
   readonly notation: string;
+  readonly endStatus?: GameEndStatus;
 }
+
+export type GameEndStatus =
+  | { type: "checkmate"; winner: Color }
+  | { type: "stalemate" }
+  | { type: "threefold-repetition" };
 
 export function formatStandardAlgebraic(
   move: Move,

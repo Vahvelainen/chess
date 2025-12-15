@@ -1,25 +1,32 @@
 import { BoardState } from "./board/BoardState";
-import { Move, MoveRecord, formatStandardAlgebraic } from "./Move";
-import { Color } from "./Piece";
+import { GameEndStatus, Move, MoveRecord, formatStandardAlgebraic } from "./Move";
+import { Color, Piece } from "./Piece";
 import { generateLegalMoves } from "./rules/MoveGenerator";
 import { applyMove } from "./rules/StateTransitions";
 import { isKingInCheck } from "./rules/Attack";
+import { RepetitionTracker } from "./state/RepetitionTracker";
+import { computeEndStatus } from "./GameEnd";
 
 export interface PlayResult {
   success: boolean;
   notation?: string;
   error?: string;
+  endStatus?: GameEndStatus;
 }
 
 export class ChessGame {
   private state: BoardState;
   private history: MoveRecord[];
   private previousStates: BoardState[];
+  private endStatus: GameEndStatus | undefined;
+  private repetition: RepetitionTracker;
 
   constructor(fen?: string) {
     this.state = fen ? BoardState.fromFEN(fen) : BoardState.initial();
     this.history = [];
     this.previousStates = [];
+    this.endStatus = undefined;
+    this.repetition = new RepetitionTracker(this.state);
   }
 
   getLegalMoves(): Move[] {
@@ -27,6 +34,9 @@ export class ChessGame {
   }
 
   playMove(candidate: Move): PlayResult {
+    if (this.endStatus) {
+      return { success: false, error: "Game has ended" };
+    }
     const legal = this.getLegalMoves();
     const matched = legal.find((move) => sameMove(move, candidate));
     if (!matched) {
@@ -44,8 +54,19 @@ export class ChessGame {
     const mate = inCheck && opponentMoves.length === 0;
     const notation = formatStandardAlgebraic(matched, movingPiece, this.state, legal, inCheck, mate);
     this.state = nextState;
-    this.history.push({ move: matched, notation });
-    return { success: true, notation };
+    const { count } = this.repetition.record(nextState);
+    const endStatus = computeEndStatus({
+      isMate: mate,
+      inCheck,
+      noLegalMoves: opponentMoves.length === 0,
+      movingPiece,
+      repetitionCount: count
+    });
+    const record: MoveRecord = { move: matched, notation, endStatus };
+    this.history.push(record);
+    this.endStatus = endStatus;
+
+    return { success: true, notation, endStatus };
   }
 
   getHistory(): MoveRecord[] {
@@ -64,6 +85,10 @@ export class ChessGame {
     return this.state.meta.activeColor;
   }
 
+  getEndStatus(): GameEndStatus | undefined {
+    return this.endStatus;
+  }
+
   undo(): PlayResult {
     if (this.history.length === 0 || this.previousStates.length === 0) {
       return { success: false, error: "No moves to undo" };
@@ -73,7 +98,9 @@ export class ChessGame {
       return { success: false, error: "No moves to undo" };
     }
     this.history.pop();
+    this.repetition.undo();
     this.state = lastState;
+    this.endStatus = undefined;
     return { success: true };
   }
 
@@ -81,6 +108,8 @@ export class ChessGame {
     this.state = fen ? BoardState.fromFEN(fen) : BoardState.initial();
     this.history = [];
     this.previousStates = [];
+    this.endStatus = undefined;
+    this.repetition.reset(this.state);
   }
 }
 
