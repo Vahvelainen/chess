@@ -35,19 +35,13 @@ export function BoardGrid({
   return (
     <div className="board-wrapper">
       <div className="board-grid-shell">
-        <div className="file-labels top-labels">
-          {files.map((file) => (
-            <span key={`file-top-${file}`}>{file}</span>
-          ))}
-        </div>
-        <div className="rank-labels left-labels">
-          {ranks.map((rank) => (
-            <span key={`rank-left-${rank}`}>{rank}</span>
-          ))}
-        </div>
         <div className="board-grid">
           {squares.map((square) => {
             const sprite = square.piece ? pieceSprite(square.piece) : undefined;
+            const fileLabel = files[square.file];
+            const rankLabel = ranks[ranks.length - 1 - square.rank];
+            const isLeftFile = square.file === 0;
+            const isBottomRank = square.rank === 0;
 
             return (
               <div
@@ -72,19 +66,12 @@ export function BoardGrid({
                     draggable={false}
                   />
                 ) : null}
+
+                {isBottomRank ? <span className="square-label square-label-file square-label-bottom">{fileLabel}</span> : null}
+                {isLeftFile ? <span className="square-label square-label-rank square-label-left">{rankLabel}</span> : null}
               </div>
             );
           })}
-        </div>
-        <div className="rank-labels right-labels">
-          {ranks.map((rank) => (
-            <span key={`rank-right-${rank}`}>{rank}</span>
-          ))}
-        </div>
-        <div className="file-labels bottom-labels">
-          {files.map((file) => (
-            <span key={`file-bottom-${file}`}>{file}</span>
-          ))}
         </div>
       </div>
     </div>

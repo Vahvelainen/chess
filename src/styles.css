@@ -109,56 +109,19 @@ body {
 }
 
 .board-grid-shell {
-  --board-size: min(90vw, 520px);
+  --board-size: min(600px, 100%);
   display: grid;
-  grid-template-columns: auto var(--board-size) auto;
-  grid-template-rows: auto var(--board-size) auto;
-  gap: 6px;
+  grid-template-columns: var(--board-size);
+  grid-template-rows: var(--board-size);
+  gap: 0;
   align-items: center;
   justify-items: center;
   width: 100%;
-}
-
-.file-labels {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  width: 100%;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 1px;
-}
-
-.rank-labels {
-  display: grid;
-  grid-template-rows: repeat(8, 1fr);
-  height: 100%;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.top-labels {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.bottom-labels {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.left-labels {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.right-labels {
-  grid-column: 3;
-  grid-row: 2;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .board-grid {
-  grid-column: 2;
-  grid-row: 2;
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-template-rows: repeat(8, minmax(0, 1fr));
@@ -200,6 +163,32 @@ body {
 
 .piece-black {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
+.square-label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.square-label-file {
+  letter-spacing: 0.5px;
+}
+
+.square-label-rank {
+  letter-spacing: 0.5px;
+}
+
+.square-label-bottom {
+  bottom: 6px;
+  right: 6px;
+}
+
+.square-label-left {
+  bottom: 6px;
+  left: 6px;
 }
 
 .controls-row {
@@ -390,9 +379,15 @@ body {
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
-    max-width: 640px;
+    width: 100%;
+    max-width: none;
     gap: 16px;
     padding: 16px;
+  }
+
+  .board-panel,
+  .history-panel {
+    width: 100%;
   }
 
   .side-menu {
@@ -408,10 +403,13 @@ body {
   }
 
   .board-grid-shell {
-    --board-size: min(94vw, 520px);
-    grid-template-columns: auto var(--board-size) auto;
-    grid-template-rows: auto var(--board-size) auto;
-    gap: 4px;
+    --board-size: min(560px, 100vw);
+    grid-template-columns: var(--board-size);
+    grid-template-rows: var(--board-size);
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
   }
 
   .history-panel {
