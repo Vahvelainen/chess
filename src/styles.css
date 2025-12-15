@@ -104,16 +104,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
 }
 
 .board-grid-shell {
+  --board-size: min(90vw, 520px);
   display: grid;
-  grid-template-columns: auto minmax(320px, min(90vw, 520px)) auto;
-  grid-template-rows: auto minmax(320px, min(90vw, 520px)) auto;
+  grid-template-columns: auto var(--board-size) auto;
+  grid-template-rows: auto var(--board-size) auto;
   gap: 6px;
   align-items: center;
   justify-items: center;
+  width: 100%;
 }
 
 .file-labels {
@@ -159,8 +162,11 @@ body {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-template-rows: repeat(8, minmax(0, 1fr));
-  width: 100%;
-  height: 100%;
+  width: var(--board-size);
+  height: var(--board-size);
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .square {
@@ -170,6 +176,7 @@ body {
   justify-content: center;
   font-weight: 600;
   user-select: none;
+  touch-action: none;
 }
 
 .square.light {
@@ -385,22 +392,26 @@ body {
     grid-template-columns: 1fr;
     max-width: 640px;
     gap: 16px;
+    padding: 16px;
   }
 
   .side-menu {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .option-group {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 240px;
+    max-width: none;
+    width: 100%;
   }
 
   .board-grid-shell {
-    grid-template-columns: auto minmax(320px, min(94vw, 520px)) auto;
-    grid-template-rows: auto minmax(320px, min(94vw, 520px)) auto;
+    --board-size: min(94vw, 520px);
+    grid-template-columns: auto var(--board-size) auto;
+    grid-template-rows: auto var(--board-size) auto;
+    gap: 4px;
   }
 
   .history-panel {
@@ -409,6 +420,11 @@ body {
 }
 
 @media (max-width: 768px) {
+  .app-shell {
+    padding: 12px;
+    gap: 12px;
+  }
+
   .history-panel {
     height: 180px;
   }
