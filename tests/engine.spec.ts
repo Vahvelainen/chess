@@ -38,7 +38,7 @@ describe("ChessGame", () => {
     const game = new ChessGame("k7/4P3/8/8/8/8/8/K7 w - - 0 1");
     const result = game.playMove(move("e7", "e8", "queen"));
     expect(result.success).toBe(true);
-    expect(result.notation).toBe("e7e8=Q+");
+    expect(result.notation).toBe("e8=Q+");
     const piece = game.getBoard().getPiece(fromAlgebraic("e8"));
     expect(piece?.type).toBe("queen");
   });
