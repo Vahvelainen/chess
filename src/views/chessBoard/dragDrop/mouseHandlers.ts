@@ -1,6 +1,6 @@
 import { SquareView } from "../boardLayoutHelpers";
 import { createSquareFromView, DropContext, parseDragFromPayload, playMove } from "./shared";
-import { createGhostElement, createTransparentPixelImage, updateGhostPosition } from "./ghost";
+import { createGhostElement, getTransparentDragImage, updateGhostPosition } from "./ghost";
 
 export function handleDragStart(event: DragEvent, square: SquareView): void {
   if (!square.piece) {
@@ -34,8 +34,17 @@ export function handleDragStart(event: DragEvent, square: SquareView): void {
 
   document.addEventListener("dragover", handleMove);
 
-  const transparent = createTransparentPixelImage();
-  transfer.setDragImage(transparent, 0, 0);
+  const dragImage = getTransparentDragImage();
+  transfer.setDragImage(dragImage, 0, 0);
+  if (!dragImage.complete) {
+    dragImage.addEventListener(
+      "load",
+      () => {
+        transfer.setDragImage(dragImage, 0, 0);
+      },
+      { once: true }
+    );
+  }
 
   target.addEventListener("dragend", cleanup, { once: true });
 }

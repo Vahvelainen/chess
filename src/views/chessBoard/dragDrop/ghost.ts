@@ -2,6 +2,7 @@ import { pieceSprite } from "../pieceHelpers";
 import { SquareView } from "../boardLayoutHelpers";
 
 const transparentPixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+let cachedTransparentPixel: HTMLImageElement | undefined;
 
 export function createGhostElement(piece: SquareView["piece"] | undefined): HTMLImageElement | undefined {
   if (!piece) {
@@ -41,10 +42,20 @@ export function updateGhostPosition(ghost: HTMLImageElement | undefined, x: numb
   ghost.style.top = `${y}px`;
 }
 
-export function createTransparentPixelImage(): HTMLImageElement {
+// Browsers ignore setDragImage if the image is not already loaded; keep one
+// cached, hidden pixel so the first drag reliably suppresses the default ghost.
+export function getTransparentDragImage(): HTMLImageElement {
+  if (cachedTransparentPixel) {
+    return cachedTransparentPixel;
+  }
   const image = document.createElement("img");
   image.src = transparentPixel;
   image.width = image.height = 1;
-  // Keep a 1x1 transparent pixel to suppress the browser's default drag image
+  image.style.position = "absolute";
+  image.style.left = "-9999px";
+  image.style.top = "-9999px";
+  image.style.pointerEvents = "none";
+  document.body.appendChild(image);
+  cachedTransparentPixel = image;
   return image;
 }
