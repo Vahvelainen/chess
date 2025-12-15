@@ -5,7 +5,8 @@ import { Color, PieceType } from "../../engine/Piece";
 import { MoveRecord } from "../../engine/Move";
 import { Bot } from "../../bots/Bot";
 import { fileLabels, mapBoardToSquares, rankLabels, SquareView } from "./boardLayoutHelpers";
-import { createHandleDrop, createTouchHandlers, handleDragOver, handleDragStart } from "./dragDropHandlers";
+import { handleDragOver, handleDragStart, createHandleDrop } from "./dragDrop/mouseHandlers";
+import { createTouchHandlers } from "./dragDrop/touchHandlers";
 
 export interface PromotionRequest {
   readonly from: { file: number; rank: number };
