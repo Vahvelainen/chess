@@ -17,3 +17,7 @@ React + TypeScript chess playground built with Vite. Includes a minimal board UI
 - `yarn build` – production build
 - `yarn preview` – preview built assets
 - `yarn typecheck` – run TypeScript
+
+## Credits
+
+Chess piece icons by [Font Awesome](https://fontawesome.com) ([CC BY 4.0](https://fontawesome.com/license/free))
