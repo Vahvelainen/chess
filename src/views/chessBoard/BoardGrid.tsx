@@ -12,6 +12,10 @@ interface Props {
   readonly onDragStart: (event: React.DragEvent<HTMLDivElement>, square: SquareView) => void;
   readonly onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   readonly onDrop: (event: React.DragEvent<HTMLDivElement>, square: SquareView) => void;
+  readonly onTouchStart: (event: React.TouchEvent<HTMLDivElement>, square: SquareView) => void;
+  readonly onTouchMove: (event: React.TouchEvent<HTMLDivElement>) => void;
+  readonly onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
+  readonly onTouchCancel: (event: React.TouchEvent<HTMLDivElement>) => void;
 }
 
 export function BoardGrid({
@@ -22,7 +26,11 @@ export function BoardGrid({
   isHumanTurn,
   onDragStart,
   onDragOver,
-  onDrop
+  onDrop,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel
 }: Props): React.JSX.Element {
   return (
     <div className="board-wrapper">
@@ -45,10 +53,16 @@ export function BoardGrid({
               <div
                 key={`${square.file}-${square.rank}`}
                 className={`square ${square.isLight ? "light" : "dark"}`}
+                data-file={square.file}
+                data-rank={square.rank}
                 draggable={Boolean(isHumanTurn && square.piece && square.piece.color === activeColor)}
                 onDragStart={(event) => onDragStart(event, square)}
                 onDragOver={onDragOver}
                 onDrop={(event) => onDrop(event, square)}
+                onTouchStart={(event) => onTouchStart(event, square)}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onTouchCancel={onTouchCancel}
               >
                 {square.piece && sprite ? (
                   <img

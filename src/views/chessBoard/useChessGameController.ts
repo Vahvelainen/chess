@@ -5,7 +5,7 @@ import { Color, PieceType } from "../../engine/Piece";
 import { MoveRecord } from "../../engine/Move";
 import { Bot } from "../../bots/Bot";
 import { fileLabels, mapBoardToSquares, rankLabels, SquareView } from "./boardLayoutHelpers";
-import { createHandleDrop, handleDragOver, handleDragStart } from "./dragDropHandlers";
+import { createHandleDrop, createTouchHandlers, handleDragOver, handleDragStart } from "./dragDropHandlers";
 
 export interface PromotionRequest {
   readonly from: { file: number; rank: number };
@@ -36,6 +36,14 @@ export function useChessGameController(bot: Bot) {
   }
 
   const handleDrop = createHandleDrop({
+    isHumanTurn,
+    game: gameRef.current,
+    setError,
+    setPendingPromotion,
+    refresh: refreshState
+  });
+
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = createTouchHandlers({
     isHumanTurn,
     game: gameRef.current,
     setError,
@@ -145,6 +153,10 @@ export function useChessGameController(bot: Bot) {
     handleDragStart,
     handleDragOver,
     handleDrop,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
     handleReset,
     handleUndo,
     handlePromotionChoice,

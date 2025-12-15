@@ -13,6 +13,65 @@ export interface DropContext {
   readonly refresh: () => void;
 }
 
+function createGhostElement(piece: SquareView["piece"] | undefined): HTMLImageElement | undefined {
+  if (!piece) {
+    return undefined;
+  }
+  const ghost = document.createElement("img");
+  ghost.className = `touch-ghost piece piece-${piece.color}`;
+  ghost.width = 56;
+  ghost.height = 56;
+  ghost.src = pieceSprite(piece);
+  ghost.style.width = "56px";
+  ghost.style.height = "56px";
+  ghost.style.maxWidth = "56px";
+  ghost.style.maxHeight = "56px";
+  ghost.draggable = false;
+  ghost.style.position = "fixed";
+  ghost.style.pointerEvents = "none";
+  ghost.style.transform = "translate(-50%, -50%)";
+  ghost.style.zIndex = "9999";
+  const filter =
+    piece.color === "white"
+      ? "brightness(0) invert(1) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35))"
+      : "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35))";
+  ghost.style.filter = filter;
+  ghost.style.webkitFilter = filter;
+  ghost.style.left = "-9999px";
+  ghost.style.top = "-9999px";
+  document.body.appendChild(ghost);
+  return ghost;
+}
+
+function updateGhostPosition(ghost: HTMLImageElement | undefined, x: number, y: number): void {
+  if (!ghost) {
+    return;
+  }
+  ghost.style.left = `${x}px`;
+  ghost.style.top = `${y}px`;
+}
+
+function playMove(context: DropContext, from: Square, to: Square): void {
+  if (from.file === to.file && from.rank === to.rank) {
+    return;
+  }
+  const movingPiece = context.game.getBoard().getPiece(from);
+  if (movingPiece?.type === "pawn" && (to.rank === 7 || to.rank === 0)) {
+    context.setPendingPromotion({ from, to, color: movingPiece.color });
+    context.setError(undefined);
+    return;
+  }
+  const result = context.game.playMove({ from, to });
+  if (result.success) {
+    context.refresh();
+    context.setError(undefined);
+    return;
+  }
+  if (result.error) {
+    context.setError(result.error);
+  }
+}
+
 export function handleDragStart(event: React.DragEvent<HTMLDivElement>, square: SquareView): void {
   if (!square.piece) {
     return;
@@ -81,23 +140,119 @@ export function createHandleDrop(context: DropContext): (event: React.DragEvent<
       return;
     }
     const to = createSquare(target.file, target.rank);
-    if (from.file === to.file && from.rank === to.rank) {
+    playMove(context, from, to);
+  };
+}
+
+function resolveSquareFromElement(element: Element | null): Square | undefined {
+  const squareElement = (element as HTMLElement | null)?.closest(".square") as HTMLElement | null;
+  if (!squareElement) {
+    return undefined;
+  }
+  const file = squareElement.dataset.file;
+  const rank = squareElement.dataset.rank;
+  if (file === undefined || rank === undefined) {
+    return undefined;
+  }
+  const parsedFile = Number.parseInt(file, 10);
+  const parsedRank = Number.parseInt(rank, 10);
+  if (Number.isNaN(parsedFile) || Number.isNaN(parsedRank)) {
+    return undefined;
+  }
+  return createSquare(parsedFile, parsedRank);
+}
+
+function findTouchById(list: TouchList, identifier: number | undefined): Touch | undefined {
+  if (identifier === undefined) {
+    return list.length > 0 ? list.item(0) ?? undefined : undefined;
+  }
+  for (let index = 0; index < list.length; index += 1) {
+    const touch = list.item(index);
+    if (touch?.identifier === identifier) {
+      return touch;
+    }
+  }
+  return undefined;
+}
+
+export function createTouchHandlers(context: DropContext): {
+  readonly handleTouchStart: (event: React.TouchEvent<HTMLDivElement>, square: SquareView) => void;
+  readonly handleTouchMove: (event: React.TouchEvent<HTMLDivElement>) => void;
+  readonly handleTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
+  readonly handleTouchCancel: (event: React.TouchEvent<HTMLDivElement>) => void;
+} {
+  let activeTouchId: number | undefined;
+  let fromSquare: Square | undefined;
+  let lastPoint: { x: number; y: number } | undefined;
+  let ghost: HTMLImageElement | undefined;
+
+  function resetTouch(): void {
+    activeTouchId = undefined;
+    fromSquare = undefined;
+    lastPoint = undefined;
+    if (ghost?.parentElement) {
+      ghost.parentElement.removeChild(ghost);
+    }
+    ghost = undefined;
+  }
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>, square: SquareView): void => {
+    if (!context.isHumanTurn || !square.piece || square.piece.color !== context.game.getActiveColor()) {
+      resetTouch();
       return;
     }
-    const movingPiece = context.game.getBoard().getPiece(from);
-    if (movingPiece?.type === "pawn" && (to.rank === 7 || to.rank === 0)) {
-      context.setPendingPromotion({ from, to, color: movingPiece.color });
-      context.setError(undefined);
+    const touch = event.touches[0];
+    activeTouchId = touch?.identifier;
+    if (touch) {
+      lastPoint = { x: touch.clientX, y: touch.clientY };
+    }
+    ghost = createGhostElement(square.piece);
+    if (ghost && touch) {
+      updateGhostPosition(ghost, touch.clientX, touch.clientY);
+    }
+    fromSquare = createSquare(square.file, square.rank);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>): void => {
+    if (!fromSquare) {
       return;
     }
-    const result = context.game.playMove({ from, to });
-    if (result.success) {
-      context.refresh();
-      context.setError(undefined);
-      return;
-    }
-    if (result.error) {
-      context.setError(result.error);
+    const touch = findTouchById(event.touches, activeTouchId);
+    if (touch) {
+      lastPoint = { x: touch.clientX, y: touch.clientY };
+      updateGhostPosition(ghost, touch.clientX, touch.clientY);
+      event.preventDefault();
     }
   };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>): void => {
+    if (!fromSquare) {
+      return;
+    }
+    const touch = findTouchById(event.changedTouches, activeTouchId);
+    const point = touch ? { x: touch.clientX, y: touch.clientY } : lastPoint;
+    const from = fromSquare;
+    if (ghost?.parentElement) {
+      ghost.parentElement.removeChild(ghost);
+    }
+    ghost = undefined;
+    activeTouchId = undefined;
+    fromSquare = undefined;
+    lastPoint = undefined;
+    if (!point) {
+      return;
+    }
+    const element = document.elementFromPoint(point.x, point.y);
+    const to = resolveSquareFromElement(element);
+    if (!to) {
+      return;
+    }
+    playMove(context, from, to);
+  };
+
+  const handleTouchCancel = (_event: React.TouchEvent<HTMLDivElement>): void => {
+    resetTouch();
+  };
+
+  return { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel };
 }

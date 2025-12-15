@@ -36,6 +36,10 @@ export function ChessBoardView(): React.JSX.Element {
           onDragStart={controller.handleDragStart}
           onDragOver={controller.handleDragOver}
           onDrop={controller.handleDrop}
+          onTouchStart={controller.handleTouchStart}
+          onTouchMove={controller.handleTouchMove}
+          onTouchEnd={controller.handleTouchEnd}
+          onTouchCancel={controller.handleTouchCancel}
         />
 
         <ControlsRow onUndo={controller.handleUndo} onReset={controller.handleReset} />
