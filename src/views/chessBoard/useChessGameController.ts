@@ -84,7 +84,7 @@ export function useChessGameController(bot: Bot) {
     if (completedUndos > 0) {
       refreshState();
       setError(undefined);
-      setEndStatus(gameRef.current.getEndStatus());
+      setEndStatus(undefined);
     }
   }
 

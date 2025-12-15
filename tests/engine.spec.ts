@@ -50,10 +50,26 @@ describe("ChessGame", () => {
   });
 
   it("detects stalemate after a move", () => {
-    const game = new ChessGame("7k/5Q2/6K1/8/8/8/8/8 w - - 0 1");
+    const game = new ChessGame("5Q1k/8/6K1/8/8/8/8/8 w - - 0 1");
     const result = game.playMove(move("f8", "f7"));
     expect(result.success).toBe(true);
     expect(result.endStatus?.type).toBe<GameEndStatus["type"]>("stalemate");
+    expect(game.getEndStatus()?.type).toBe("stalemate");
+  });
+
+  it("clears end status when undoing a stalemate move", () => {
+    const game = new ChessGame("5Q1k/8/6K1/8/8/8/8/8 w - - 0 1");
+    const stalemateResult = game.playMove(move("f8", "f7"));
+    expect(stalemateResult.success).toBe(true);
+    expect(game.getEndStatus()?.type).toBe("stalemate");
+
+    const undoResult = game.undo();
+    expect(undoResult.success).toBe(true);
+    expect(game.getEndStatus()).toBeUndefined();
+    expect(game.getLegalMoves().length).toBeGreaterThan(0);
+
+    const replayResult = game.playMove(move("f8", "f7"));
+    expect(replayResult.success).toBe(true);
     expect(game.getEndStatus()?.type).toBe("stalemate");
   });
 
