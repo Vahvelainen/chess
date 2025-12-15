@@ -63,7 +63,6 @@ export function createTouchHandlers(context: DropContext): {
     if (touch) {
       lastPoint = { x: touch.clientX, y: touch.clientY };
       updateGhostPosition(ghost, touch.clientX, touch.clientY);
-      event.preventDefault();
     }
   };
 
