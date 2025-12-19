@@ -11,6 +11,11 @@
   --error: #c24141;
   --success: #2f855a;
   --info: #2563eb;
+  --shell-padding: 24px;
+  --shell-padding-compact: 18px;
+  --shell-padding-mobile: 12px;
+  --board-max: 600px;
+  --board-compact-max: 560px;
 }
 
 * {
@@ -38,7 +43,7 @@ body {
   gap: 20px;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--shell-padding);
   align-items: start;
   flex: 1;
 }
@@ -109,7 +114,7 @@ body {
 }
 
 .board-grid-shell {
-  --board-size: min(600px, 100%);
+  --board-size: min(var(--board-max), calc(100vw - var(--shell-padding) * 2));
   display: grid;
   grid-template-columns: var(--board-size);
   grid-template-rows: var(--board-size);
@@ -117,7 +122,7 @@ body {
   align-items: center;
   justify-items: center;
   width: 100%;
-  max-width: 600px;
+  max-width: var(--board-size);
   margin: 0 auto;
 }
 
@@ -376,13 +381,17 @@ body {
   color: var(--muted);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
+  :root {
+    --shell-padding: var(--shell-padding-compact);
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
     width: 100%;
     max-width: none;
     gap: 16px;
-    padding: 16px;
+    padding: var(--shell-padding);
   }
 
   .board-panel,
@@ -403,13 +412,12 @@ body {
   }
 
   .board-grid-shell {
-    --board-size: min(560px, 100vw);
+    --board-size: min(var(--board-compact-max), calc(100vw - var(--shell-padding) * 2));
     grid-template-columns: var(--board-size);
     grid-template-rows: var(--board-size);
-    width: 100vw;
-    max-width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    width: 100%;
+    max-width: var(--board-size);
+    margin: 0 auto;
   }
 
   .history-panel {
@@ -417,10 +425,36 @@ body {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 720px) {
+  :root {
+    --shell-padding: var(--shell-padding-mobile);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
   .app-shell {
-    padding: 12px;
+    padding: var(--shell-padding);
     gap: 12px;
+  }
+
+  .board-panel {
+    width: calc(100vw - var(--safe-left) - var(--safe-right));
+    margin-left: calc(-50vw + 50% + var(--safe-left));
+    margin-right: calc(-50vw + 50% + var(--safe-right));
+  }
+
+  .controls-row,
+  .banner {
+    width: calc(100% - var(--shell-padding) * 2);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .board-grid-shell {
+    --board-size: calc(100vw - var(--safe-left) - var(--safe-right));
+    width: 100%;
+    max-width: none;
+    margin: 0;
   }
 
   .history-panel {
