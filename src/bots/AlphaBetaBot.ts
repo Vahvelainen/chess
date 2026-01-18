@@ -82,7 +82,7 @@ export class AlphaBetaBot implements Bot {
       if (inCheck) {
         const losingTurn = state.meta.activeColor === perspective;
         const distanceBonus = depth;
-        return losingTurn ? -CHECKMATE_SCORE + distanceBonus : CHECKMATE_SCORE - distanceBonus;
+        return losingTurn ? -CHECKMATE_SCORE - distanceBonus : CHECKMATE_SCORE + distanceBonus;
       }
       return DRAW_PENALTY;
     }
