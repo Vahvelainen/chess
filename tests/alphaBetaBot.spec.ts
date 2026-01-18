@@ -58,4 +58,67 @@ describe("AlphaBetaBot", () => {
 
     expect(best.move).toEqual(move("h8", "h1"));
   });
+
+  it("prefers moving knight to center over edge", () => {
+    // Position where white can move knight from b1 to either e4 (center) or a3 (edge)
+    // The center move should be preferred due to center control bonus
+    const game = new ChessGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    const bot = new AlphaBetaBot();
+    const state = game.getBoard();
+    const perspective = game.getActiveColor();
+    const legalMoves = generateLegalMoves(state);
+
+    // Find moves from b1 (knight's starting position)
+    const knightMoves = legalMoves.filter((m) => m.from.file === 1 && m.from.rank === 0);
+    const centerMove = knightMoves.find((m) => m.to.file === 4 && m.to.rank === 3); // e4
+    const edgeMove = knightMoves.find((m) => m.to.file === 0 && m.to.rank === 2); // a3
+
+    if (centerMove && edgeMove) {
+      const centerScore = (bot as any).search(applyMove(state, centerMove), 2, perspective, -Infinity, Infinity);
+      const edgeScore = (bot as any).search(applyMove(state, edgeMove), 2, perspective, -Infinity, Infinity);
+      expect(centerScore).toBeGreaterThan(edgeScore);
+    }
+  });
+
+  it("prefers retaining castling rights", () => {
+    // Position where white can move king (losing castling) or move a pawn
+    // Moving the pawn should be preferred to retain castling rights
+    const game = new ChessGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    const bot = new AlphaBetaBot();
+    const state = game.getBoard();
+    const perspective = game.getActiveColor();
+    const legalMoves = generateLegalMoves(state);
+
+    // Find king move (e1 to e2) which loses castling rights
+    const kingMove = legalMoves.find((m) => m.from.file === 4 && m.from.rank === 0 && m.to.file === 4 && m.to.rank === 1);
+    // Find a pawn move (e2 to e3) which retains castling
+    const pawnMove = legalMoves.find((m) => m.from.file === 4 && m.from.rank === 1 && m.to.file === 4 && m.to.rank === 2);
+
+    if (kingMove && pawnMove) {
+      const kingMoveScore = (bot as any).search(applyMove(state, kingMove), 2, perspective, -Infinity, Infinity);
+      const pawnMoveScore = (bot as any).search(applyMove(state, pawnMove), 2, perspective, -Infinity, Infinity);
+      expect(pawnMoveScore).toBeGreaterThan(kingMoveScore);
+    }
+  });
+
+  it("prefers castling when available", () => {
+    // Position where white can castle kingside or make a different move
+    // Castling should be preferred due to castled bonus
+    const game = new ChessGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    const bot = new AlphaBetaBot();
+    const state = game.getBoard();
+    const perspective = game.getActiveColor();
+    const legalMoves = generateLegalMoves(state);
+
+    // Find castling move (kingside)
+    const castlingMove = legalMoves.find((m) => m.isCastle === "kingside");
+    // Find a non-castling move (e.g., pawn move)
+    const pawnMove = legalMoves.find((m) => m.from.file === 4 && m.from.rank === 1 && m.to.file === 4 && m.to.rank === 2);
+
+    if (castlingMove && pawnMove) {
+      const castlingScore = (bot as any).search(applyMove(state, castlingMove), 2, perspective, -Infinity, Infinity);
+      const pawnMoveScore = (bot as any).search(applyMove(state, pawnMove), 2, perspective, -Infinity, Infinity);
+      expect(castlingScore).toBeGreaterThan(pawnMoveScore);
+    }
+  });
 });

@@ -6,7 +6,7 @@ import { BoardState } from "../engine/board/BoardState";
 import { generateLegalMoves } from "../engine/rules/MoveGenerator";
 import { applyMove } from "../engine/rules/StateTransitions";
 import { isKingInCheck } from "../engine/rules/Attack";
-import { materialScore } from "./Evaluation";
+import { evaluate } from "./Evaluation";
 
 const MAX_DEPTH = 3;
 const CHECKMATE_SCORE = 1000000;
@@ -87,7 +87,7 @@ export class AlphaBetaBot implements Bot {
       return DRAW_PENALTY;
     }
     if (depth === 0) {
-      return materialScore(state, perspective);
+      return evaluate(state, perspective);
     }
     return undefined;
   }
